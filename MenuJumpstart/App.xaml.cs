@@ -12,7 +12,7 @@ namespace JumpstartMenu
     /// </summary>
     public partial class App : Application
     {
-        public bool DebugMode = false;
+        public Boolean DebugMode = false;
 
         protected override void OnStartup(StartupEventArgs e)
         {

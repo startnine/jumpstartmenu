@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -20,6 +17,7 @@ using Start9.Api;
 using IWshRuntimeLibrary;
 using File = System.IO.File;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace JumpstartMenu
 {
@@ -29,97 +27,22 @@ namespace JumpstartMenu
     public partial class MainWindow : Window
     {
         Window TempStartWindow;
-        //string[] args;
 
-        public bool DebugMode = false;
+        public Boolean DebugMode = false;
 
-        public MainWindow(bool debugMode)
+        public MainWindow(Boolean debugMode)
         {
             InitializeComponent();
             Application.Current.MainWindow = this;
             DebugMode = debugMode;
-            //args = Environment.GetCommandLineArgs();
-
-            //LoadResourceDictionaryButton
             Loaded += MainWindow_Loaded;
             Show();
-            /*Left = SystemParameters.WorkArea.Left;
-            Top = SystemParameters.WorkArea.Top;
-            Height = SystemParameters.WorkArea.Height;*/
 
-            var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.Start9_NewLogo_Plexed.GetHbitmap(),
-                                                                     IntPtr.Zero,
-                                                                     Int32Rect.Empty,
-                                                                     BitmapSizeOptions.FromEmptyOptions());
-            Resources["Start9LogoImageBrush"] = new ImageBrush(bitmapSource);
-
-            (Properties.Resources.Start9_NewLogo_Plexed).Dispose();
-
-
-
-            var tempStart = new ToggleButton()
-            {
-                Style = (Style)Resources["StartStyle"],
-                Background = (ImageBrush)Resources["Start9LogoImageBrush"]
-            };
-            /*{
-                ,/*
-                Height = 40,
-                Width = 100,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Content = "Start"*
-            };*/
-
-            tempStart.SizeChanged += TempStart_SizeChanged;
-
-            TempStartWindow = new Window()
-            {
-                WindowStyle = WindowStyle.None,
-                ResizeMode = ResizeMode.NoResize,
-                AllowsTransparency = true,
-                Background = new SolidColorBrush(Colors.Transparent),/*Color.FromArgb(0x01, 0, 0, 0)*/
-                ShowInTaskbar = false,
-                /*Width = 70,
-                Height = 50,*/
-                Width = 40,
-                Height = 60,
-                Left = 0,
-                Top = SystemParameters.PrimaryScreenHeight - 40,
-                Topmost = true,/*
-                Padding = new Thickness(0, 23, 0, 0),*/
-                Content = tempStart
-            };
-
-            TempStartWindow.Loaded += TempStartWindow_Loaded;
-
-            TempStartWindow.Show();
-
-            tempStart.Click += (sender, e) =>
-            {
-                if (Visibility == Visibility.Visible)
-                {
-                    Hide();
-                }
-                else
-                {
-                    Show();
-                }
-            };
-
-            Binding checkedBinding = new Binding()
-            {
-                Source = this,
-                Path = new PropertyPath("IsVisible"),
-                Mode = BindingMode.OneWay,
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-            };
-            BindingOperations.SetBinding(tempStart, ToggleButton.IsCheckedProperty, checkedBinding);
 
             Deactivated += (sender, e) => Hide();
         }
 
-        private void TempStart_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void TempStart_SizeChanged(Object sender, SizeChangedEventArgs e)
         {
             TempStartWindow.Width = (TempStartWindow.Content as ToggleButton).Width;
         }
@@ -132,7 +55,7 @@ namespace JumpstartMenu
             WinApi.SetWindowLong(hwnd, WinApi.GwlExstyle, extendedStyle.ToInt32() | WinApi.WsExToolwindow);
         }
 
-        private void TempStartWindow_Loaded(object sender, RoutedEventArgs e)
+        private void TempStartWindow_Loaded(Object sender, RoutedEventArgs e)
         {
             if (DebugMode)
             {
@@ -157,19 +80,10 @@ namespace JumpstartMenu
 
 
             Timer debugTimer = new Timer(1);
-
-            debugTimer.Elapsed += delegate
-            {
-                /*Dispatcher.Invoke(new Action(() =>
-                {
-                    WinApi.SetWindowPos(new WindowInteropHelper(TempStartWindow).Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010);
-                }));*/
-            };
-
             debugTimer.Start();
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(Object sender, RoutedEventArgs e)
         {
             /*if (args.Length >= 1)
             {
@@ -219,7 +133,7 @@ namespace JumpstartMenu
             {
                 foreach (IconTreeViewItem t in AllAppsAppDataItems)
                 {
-                    bool FolderIsDuplicate = false;
+                    var FolderIsDuplicate = false;
 
                     foreach (IconTreeViewItem v in AllAppsProgramDataItems)
                     {
@@ -279,9 +193,35 @@ namespace JumpstartMenu
             return AllAppsReorgItems;
         }
 
-        public IconTreeViewItem AllAppsListGetItem(string path)
+
+        struct SHFILEINFO
         {
-            string target = path;
+            public IntPtr hIcon;
+            public IntPtr iIcon;
+            public UInt32 dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public String szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public String szTypeName;
+        };
+
+        class Win32
+        {
+            public const UInt32 SHGFI_ICON = 0x100;
+            public const UInt32 SHGFI_LARGEICON = 0x0;    // 'Large icon
+            public const UInt32 SHGFI_SMALLICON = 0x1;    // 'Small icon
+
+            [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+            public static extern IntPtr SHGetFileInfo(String pszPath,
+                                        UInt32 dwFileAttributes,
+                                        ref SHFILEINFO psfi,
+                                        UInt32 cbSizeFileInfo,
+                                        UInt32 uFlags);
+        }
+
+        public IconTreeViewItem AllAppsListGetItem(String path)
+        {
+            var target = path;
 
             if (System.IO.Path.GetExtension(path).Contains("lnk"))
             {
@@ -289,13 +229,13 @@ namespace JumpstartMenu
             }
 
             IconTreeViewItem item = new IconTreeViewItem()
-            {
+            {   
                 Tag = target
             };
 
             if (Directory.Exists(target))
             {
-                foreach (string s in Directory.EnumerateFiles(target))
+                foreach (var s in Directory.EnumerateFiles(target))
                 {
                     var subItem = AllAppsListGetItem(s);
                     subItem.MinWidth = item.MinWidth + 16;
@@ -316,11 +256,16 @@ namespace JumpstartMenu
 
             if ((File.Exists(item.Tag.ToString())) | (Directory.Exists(item.Tag.ToString())))
             {
-                //WinApi.ShFileInfo shInfo = new WinApi.ShFileInfo();
-                //WinApi.SHGetFileInfo(item.Tag.ToString(), 0, ref shInfo, (uint)Marshal.SizeOf(shInfo), 0x000000001 | 0x100);
-                //System.Drawing.Icon entryIcon = System.Drawing.Icon.FromHandle(shInfo.hIcon);
+                //var fi = new SHFILEINFO();
+
+                //var img = Win32.SHGetFileInfo(item.Tag.ToString(), 
+                //    0,
+                //    ref fi, 
+                //    (uint)Marshal.SizeOf(fi),
+                //    Win32.SHGFI_ICON | Win32.SHGFI_LARGEICON);
+
                 ImageSource entryIconImageSource = Imaging.CreateBitmapSourceFromHIcon(
-                    SystemIcons.WinLogo.Handle,
+                    SystemIcons.Shield.Handle,
                     Int32Rect.Empty,
                     BitmapSizeOptions.FromWidthAndHeight(SystemScaling.RealPixelsToWpfUnits(16), SystemScaling.RealPixelsToWpfUnits(16)));
 
@@ -335,7 +280,7 @@ namespace JumpstartMenu
             return item;
         }
 
-        private void Item_Opened(object sender, RoutedEventArgs e)
+        private void Item_Opened(Object sender, RoutedEventArgs e)
         {
             var item = (sender as IconTreeViewItem);
             try
@@ -372,11 +317,11 @@ namespace JumpstartMenu
             Hide();
         }
 
-        private List<IconTreeViewItem> GetAllAppsFoldersAsTree(string Path)
+        private List<IconTreeViewItem> GetAllAppsFoldersAsTree(String Path)
         {
             List<IconTreeViewItem> AllAppsItems = new List<IconTreeViewItem>();
 
-            foreach (string s in Directory.EnumerateFiles(Path))
+            foreach (var s in Directory.EnumerateFiles(Path))
             {
                 IconTreeViewItem t = AllAppsListGetItem(s);
                 /*((string)(((t.Header as DockPanel).Children[1] as System.Windows.Controls.Label).Content as string)*/
@@ -391,7 +336,7 @@ namespace JumpstartMenu
                 }
             }
 
-            foreach (string s in Directory.EnumerateDirectories(Path))
+            foreach (var s in Directory.EnumerateDirectories(Path))
             {
                 IconTreeViewItem t = AllAppsListGetItem(s);
                 /*if (((string)(((t.Header as DockPanel).Children[1] as System.Windows.Controls.Label).Content as string) != "desktop") & ((string)(((t.Header as DockPanel).Children[1] as System.Windows.Controls.Label).Content as string) != "desktop.ini"))*/
@@ -407,9 +352,9 @@ namespace JumpstartMenu
             return AllAppsItems;
         }
 
-        public string GetTargetPath(string filePath)
+        public String GetTargetPath(String filePath)
         {
-            string targetPath = null;
+            String targetPath = null;
 
             if (targetPath == null)
             {
@@ -431,20 +376,20 @@ namespace JumpstartMenu
             }
         }
 
-        public string GetInternetShortcut(string filePath)
+        public String GetInternetShortcut(String filePath)
         {
             try
             {
-                string url = "";
+                var url = "";
 
                 using (TextReader reader = new StreamReader(filePath))
                 {
-                    string line = "";
+                    var line = "";
                     while ((line = reader.ReadLine()) != null)
                     {
                         if (line.StartsWith("URL="))
                         {
-                            string[] splitLine = line.Split('=');
+                            String[] splitLine = line.Split('=');
                             if (splitLine.Length > 0)
                             {
                                 url = splitLine[1];
@@ -461,7 +406,7 @@ namespace JumpstartMenu
             }
         }
 
-        string ResolveShortcut(string filePath)
+        String ResolveShortcut(String filePath)
         {
             // IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
             var shell = new WshShell();
@@ -479,9 +424,9 @@ namespace JumpstartMenu
         }
 
 
-        public const int MaxFeatureLength = 38;
-        public const int MaxGuidLength = 38;
-        public const int MaxPathLength = 1024;
+        public const Int32 MaxFeatureLength = 38;
+        public const Int32 MaxGuidLength = 38;
+        public const Int32 MaxPathLength = 1024;
 
         public enum InstallState
         {
@@ -540,45 +485,44 @@ namespace JumpstartMenu
             BeginStoryboard((Storyboard)Resources["HideMenu"]);
         }
 
-        private void ShutDownButton_Click(object sender, RoutedEventArgs e)
+        private void ShutDownButton_Click(Object sender, RoutedEventArgs e)
         {
             SystemContext.ShutDownSystem();
         }
 
-        private void RestartButton_Click(object sender, RoutedEventArgs e)
+        private void RestartButton_Click(Object sender, RoutedEventArgs e)
         {
             SystemContext.RestartSystem();
         }
 
-        private void SignOutButton_Click(object sender, RoutedEventArgs e)
+        private void SignOutButton_Click(Object sender, RoutedEventArgs e)
         {
             SystemContext.SignOut();
         }
 
-        private void SwitchUserButton_Click(object sender, RoutedEventArgs e)
+        private void SwitchUserButton_Click(Object sender, RoutedEventArgs e)
         {
             SystemContext.LockUserAccount();
         }
 
 
-        private void LoadResourceDictionaryButton_Click(object sender, RoutedEventArgs e)
+        private void LoadResourceDictionaryButton_Click(Object sender, RoutedEventArgs e)
         {
             SelectResourceDictionary();
             var tempStart = (TempStartWindow.Content as ToggleButton);
             tempStart.Style = (Style)Resources["StartStyle"];
-            tempStart.Background = (ImageBrush)Resources["Start9LogoImageBrush"];
         }
 
         void SelectResourceDictionary()
         {
-            Microsoft.Win32.OpenFileDialog openDictionaryDialog = new OpenFileDialog();
-            bool? result = openDictionaryDialog.ShowDialog();
+            var openDictionaryDialog = new OpenFileDialog();
+            var result = openDictionaryDialog.ShowDialog();
             if (result == true)
                 Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri(openDictionaryDialog.FileName) });
         }
         //{ InitialDirectory = @"C:\Users\Splitwirez\Documents\Start9\Modules\JumpstartMenu\ResourceDictionaries" };
 
-        private void SleepButton_Click(object sender, RoutedEventArgs e)
+        private void SleepButton_Click(Object sender, RoutedEventArgs e)
         {
             SystemContext.SleepSystem();
         }
