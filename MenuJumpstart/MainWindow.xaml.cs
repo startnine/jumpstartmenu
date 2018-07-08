@@ -18,6 +18,7 @@ using IWshRuntimeLibrary;
 using File = System.IO.File;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using Start9.Api.DiskItems;
 
 namespace JumpstartMenu
 {
@@ -264,16 +265,16 @@ namespace JumpstartMenu
                 //    (uint)Marshal.SizeOf(fi),
                 //    Win32.SHGFI_ICON | Win32.SHGFI_LARGEICON);
 
-                ImageSource entryIconImageSource = Imaging.CreateBitmapSourceFromHIcon(
-                    SystemIcons.Shield.Handle,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromWidthAndHeight(SystemScaling.RealPixelsToWpfUnits(16), SystemScaling.RealPixelsToWpfUnits(16)));
+                //ImageSource entryIconImageSource = Imaging.CreateBitmapSourceFromHIcon(
+                //    SystemIcons.Shield.Handle,
+                //    Int32Rect.Empty,
+                //    BitmapSizeOptions.FromWidthAndHeight(SystemScaling.RealPixelsToWpfUnits(16), SystemScaling.RealPixelsToWpfUnits(16)));
 
                 item.Icon = new Canvas()
                 {
                     Width = 16,
                     Height = 16,
-                    Background = new ImageBrush(entryIconImageSource)
+                    Background = (ImageBrush) new DiskItemToIconImageBrushConverter().Convert(new DiskItem(item.Tag.ToString()), null, 64, null)
                 };
             }
 
